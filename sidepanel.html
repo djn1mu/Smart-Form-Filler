@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; padding: 15px; display: flex; flex-direction: column; height: 100vh; margin: 0; box-sizing: border-box; }
+    .setup-section { border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; }
+    details summary { cursor: pointer; color: #666; font-size: 0.9em; }
+    textarea { width: 100%; height: 80px; margin-top: 5px; }
+    input { width: 100%; margin: 5px 0; box-sizing: border-box; }
+    #chat-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-radius: 4px; background: #f9f9f9; }
+    .chat-msg { margin-bottom: 10px; font-size: 0.9em; }
+    .user-msg { color: #1a73e8; font-weight: bold; }
+    .ai-msg { color: #333; }
+    .controls { display: flex; gap: 5px; }
+    #userInput { flex-grow: 1; }
+    button { cursor: pointer; padding: 8px; background: #4285f4; color: white; border: none; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h3>AI Form Assistant</h3>
+  
+  <details class="setup-section">
+    <summary>Settings & Profile</summary>
+    <input type="text" id="apiEndpoint" value="https://api.openai.com/v1/chat/completions">
+    <input type="password" id="apiKey" placeholder="API Key">
+    <input type="text" id="modelName" value="gpt-4o-mini">
+    <textarea id="userProfile" placeholder="Your Bio/Info..."></textarea>
+    <button id="saveBtn" style="width: 100%; margin-top: 5px;">Save Settings</button>
+  </details>
+
+  <div id="chat-container">
+    <div class="chat-msg ai-msg">Click "Analyze & Fill" to start, or ask me anything!</div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="userInput" placeholder="Ask to refine...">
+    <button id="sendBtn">Send</button>
+  </div>
+  <button id="scanBtn" style="width: 100%; margin-top: 10px; background: #34a853;">Analyze & Fill Form</button>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

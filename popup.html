@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { width: 300px; padding: 10px; font-family: sans-serif; }
+    textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+    input { width: 100%; margin-bottom: 10px; }
+    button { width: 100%; cursor: pointer; padding: 8px; background: #4285f4; color: white; border: none; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h3>AI Form Filler Setup</h3>
+  <label>API Endpoint (OpenAI compatible):</label>
+  <input type="text" id="apiEndpoint" value="https://api.openai.com/v1/chat/completions">
+  <label>API Key:</label>
+  <input type="password" id="apiKey" placeholder="sk-...">
+  <label>Model Name:</label>
+  <input type="text" id="modelName" value="gpt-4o-mini">
+  <label>Your Info (Bio/Details):</label>
+  <textarea id="userProfile" placeholder="Enter your name, email, phone, work history, etc."></textarea>
+  <button id="saveBtn">Save & Analyze Page</button>
+  <script src="popup.js"></script>
+</body>
+</html>

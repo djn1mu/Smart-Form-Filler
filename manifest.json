@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "AI Smart Form Filler",
+  "version": "1.0",
+  "description": "Autofill any form using AI based on your personal profile.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "sidePanel"
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {},
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}
