@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const scanBtn = document.getElementById('scanBtn');
+  const saveBtn = document.getElementById('saveBtn');
+
   // 1. Load saved settings
   chrome.storage.local.get(['apiKey', 'userProfile', 'apiEndpoint', 'modelName'], (res) => {
     if (res.apiKey) document.getElementById('apiKey').value = res.apiKey;
@@ -8,18 +11,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 2. Save settings
-  document.getElementById('saveBtn').addEventListener('click', () => {
+  saveBtn.addEventListener('click', () => {
     const settings = {
       apiKey: document.getElementById('apiKey').value,
       userProfile: document.getElementById('userProfile').value,
       apiEndpoint: document.getElementById('apiEndpoint').value,
       modelName: document.getElementById('modelName').value
     };
-    chrome.storage.local.set(settings, () => alert('Settings saved!'));
+    chrome.storage.local.set(settings, () => {
+      const originalText = saveBtn.innerText;
+      saveBtn.innerText = '✓ Saved!';
+      saveBtn.classList.add('btn-saved');
+      setTimeout(() => {
+        saveBtn.innerText = originalText;
+        saveBtn.classList.remove('btn-saved');
+      }, 2000);
+    });
   });
 
   // 3. Trigger initial scan
-  document.getElementById('scanBtn').addEventListener('click', () => {
+  scanBtn.addEventListener('click', () => {
+    setLoadingState(true);
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       chrome.tabs.sendMessage(tabs[0].id, { action: "SCAN_FORM" });
       appendMessage('AI', 'Scanning form fields...');
@@ -27,25 +39,62 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 4. Handle Chat refinement
-  document.getElementById('sendBtn').addEventListener('click', () => {
-    const text = document.getElementById('userInput').value;
+  document.getElementById('sendBtn').addEventListener('click', handleSend);
+  
+  document.getElementById('userInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleSend();
+  });
+
+  function handleSend() {
+    const text = document.getElementById('userInput').value.trim();
     if (!text) return;
     
     appendMessage('You', text);
     document.getElementById('userInput').value = '';
+    setLoadingState(true);
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       // We tell the background script to talk to AI with a "refinement" instruction
       chrome.runtime.sendMessage({ action: "CALL_AI", refinement: text });
     });
-  });
+  }
+});
+
+function setLoadingState(isLoading) {
+  const scanBtn = document.getElementById('scanBtn');
+  const sendBtn = document.getElementById('sendBtn');
+  if (isLoading) {
+    scanBtn.disabled = true;
+    sendBtn.disabled = true;
+    scanBtn.innerText = '⏳ Processing...';
+  } else {
+    scanBtn.disabled = false;
+    sendBtn.disabled = false;
+    scanBtn.innerText = '🚀 Analyze & Fill Form';
+  }
+}
+
+// Listen for updates from the background script
+chrome.runtime.onMessage.addListener((request) => {
+  if (request.action === "AI_ERROR") {
+    appendMessage('AI', `❌ Error: ${request.message}`);
+    setLoadingState(false);
+  } else if (request.action === "FILL_COMPLETED") {
+    appendMessage('AI', '✅ Form filled successfully!');
+    setLoadingState(false);
+  }
 });
 
 function appendMessage(sender, text) {
   const container = document.getElementById('chat-container');
   const div = document.createElement('div');
-  div.className = 'chat-msg';
-  div.innerHTML = `<span class="${sender === 'You' ? 'user-msg' : 'ai-msg'}">${sender}:</span> ${text}`;
+  
+  // Style bubbles differently based on who sent the message
+  div.className = `chat-msg ${sender === 'You' ? 'user-msg' : 'ai-msg'}`;
+  div.innerText = text; 
+  
   container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
+  
+  // Smooth scroll to the newest message
+  container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 }

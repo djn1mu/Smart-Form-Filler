@@ -73,6 +73,9 @@ async function handleAiCall(request, sender) {
         action: "FILL_FIELDS", 
         data: parsedData.fields || parsedData 
       });
+
+      // Notify the side panel that we are done
+      chrome.runtime.sendMessage({ action: "FILL_COMPLETED" });
     }
 
   } catch (error) {

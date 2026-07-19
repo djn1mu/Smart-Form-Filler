@@ -1,42 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <style>
-    body { font-family: sans-serif; padding: 15px; display: flex; flex-direction: column; height: 100vh; margin: 0; box-sizing: border-box; }
-    .setup-section { border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; }
-    details summary { cursor: pointer; color: #666; font-size: 0.9em; }
-    textarea { width: 100%; height: 80px; margin-top: 5px; }
-    input { width: 100%; margin: 5px 0; box-sizing: border-box; }
-    #chat-container { flex-grow: 1; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-radius: 4px; background: #f9f9f9; }
-    .chat-msg { margin-bottom: 10px; font-size: 0.9em; }
-    .user-msg { color: #1a73e8; font-weight: bold; }
-    .ai-msg { color: #333; }
-    .controls { display: flex; gap: 5px; }
-    #userInput { flex-grow: 1; }
-    button { cursor: pointer; padding: 8px; background: #4285f4; color: white; border: none; border-radius: 4px; }
+    :root { --primary: #2563eb; --primary-hover: #1d4ed8; --success: #10b981; --success-hover: #059669; --bg: #f8fafc; --text: #0f172a; --border: #e2e8f0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; background-color: var(--bg); color: var(--text); }
+    
+    header { padding: 16px; background: white; border-bottom: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 8px; }
+    header h3 { margin: 0; font-size: 16px; font-weight: 600; color: #1e293b; }
+    
+    .container { flex: 1; display: flex; flex-direction: column; padding: 16px; gap: 16px; overflow: hidden; }
+    
+    /* Settings Panel */
+    details { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    details summary { cursor: pointer; font-weight: 500; font-size: 14px; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center; color: #475569; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::after { content: '▼'; font-size: 10px; transition: transform 0.2s; }
+    details[open] summary::after { transform: rotate(180deg); }
+    
+    .settings-content { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+    label { font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: -6px; }
+    
+    input, textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; transition: all 0.2s; font-family: inherit; background: #fff; }
+    input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    textarea { resize: vertical; min-height: 80px; }
+    
+    /* Buttons */
+    button { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    button:hover:not(:disabled) { background: var(--primary-hover); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-success { background: var(--success); }
+    .btn-success:hover:not(:disabled) { background: var(--success-hover); }
+    .btn-saved { background: var(--success) !important; color: white !important; }
+    
+    /* Chat Area */
+    #chat-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 10px; }
+    .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+    .user-msg { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+    .ai-msg { align-self: flex-start; background: white; color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    
+    /* Action Footer */
+    .controls-wrapper { background: white; border-top: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .chat-input-row { display: flex; gap: 8px; }
+    .chat-input-row input { flex: 1; }
   </style>
 </head>
 <body>
-  <h3>AI Form Assistant</h3>
+  <header>
+    ✨ <h3>AI Form Assistant</h3>
+  </header>
   
-  <details class="setup-section">
-    <summary>Settings & Profile</summary>
-    <input type="text" id="apiEndpoint" value="https://api.openai.com/v1/chat/completions">
-    <input type="password" id="apiKey" placeholder="API Key">
-    <input type="text" id="modelName" value="gpt-4o-mini">
-    <textarea id="userProfile" placeholder="Your Bio/Info..."></textarea>
-    <button id="saveBtn" style="width: 100%; margin-top: 5px;">Save Settings</button>
-  </details>
+  <div class="container">
+    <details id="settingsDetails">
+      <summary>⚙️ Settings & Profile</summary>
+      <div class="settings-content">
+        <label>API Endpoint</label>
+        <input type="text" id="apiEndpoint" value="https://api.openai.com/v1/chat/completions">
+        <label>API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-...">
+        <label>Model Name</label>
+        <input type="text" id="modelName" value="gpt-4o-mini">
+        <label>Your Profile (Bio/Info)</label>
+        <textarea id="userProfile" placeholder="Enter your name, email, phone, work history, etc."></textarea>
+        <button id="saveBtn">Save Settings</button>
+      </div>
+    </details>
 
-  <div id="chat-container">
-    <div class="chat-msg ai-msg">Click "Analyze & Fill" to start, or ask me anything!</div>
+    <div id="chat-container">
+      <div class="chat-msg ai-msg">👋 Hi! I'm your AI assistant. Click "Analyze & Fill" below to scan the page, or ask me anything!</div>
+    </div>
   </div>
 
-  <div class="controls">
-    <input type="text" id="userInput" placeholder="Ask to refine...">
-    <button id="sendBtn">Send</button>
+  <div class="controls-wrapper">
+    <div class="chat-input-row">
+      <input type="text" id="userInput" placeholder="E.g., Use my business email...">
+      <button id="sendBtn">▶ Send</button>
+    </div>
+    <button id="scanBtn" class="btn-success">🚀 Analyze & Fill Form</button>
   </div>
-  <button id="scanBtn" style="width: 100%; margin-top: 10px; background: #34a853;">Analyze & Fill Form</button>
 
   <script src="sidepanel.js"></script>
 </body>
