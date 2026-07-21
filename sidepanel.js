@@ -1,13 +1,23 @@
+let chatHistory = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   const scanBtn = document.getElementById('scanBtn');
   const saveBtn = document.getElementById('saveBtn');
 
   // 1. Load saved settings
-  chrome.storage.local.get(['apiKey', 'userProfile', 'apiEndpoint', 'modelName'], (res) => {
+  chrome.storage.local.get(['apiKey', 'userProfile', 'apiEndpoint', 'modelName', 'chatHistory'], (res) => {
     if (res.apiKey) document.getElementById('apiKey').value = res.apiKey;
     if (res.userProfile) document.getElementById('userProfile').value = res.userProfile;
     if (res.apiEndpoint) document.getElementById('apiEndpoint').value = res.apiEndpoint;
     if (res.modelName) document.getElementById('modelName').value = res.modelName;
+
+    // Restore previous chat history
+    if (res.chatHistory && res.chatHistory.length > 0) {
+      chatHistory = res.chatHistory;
+      const container = document.getElementById('chat-container');
+      container.innerHTML = ''; // Clear default greeting
+      chatHistory.forEach(msg => appendMessage(msg.sender, msg.text, false));
+    }
   });
 
   // 2. Save settings
@@ -32,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Trigger initial scan
   scanBtn.addEventListener('click', () => {
     setLoadingState(true);
+    document.getElementById('settingsDetails').open = false; // Auto-collapse settings
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       chrome.tabs.sendMessage(tabs[0].id, { action: "SCAN_FORM" });
       appendMessage('AI', 'Scanning form fields...');
@@ -49,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = document.getElementById('userInput').value.trim();
     if (!text) return;
     
+    document.getElementById('settingsDetails').open = false; // Auto-collapse settings
     appendMessage('You', text);
     document.getElementById('userInput').value = '';
     setLoadingState(true);
@@ -58,6 +70,18 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.runtime.sendMessage({ action: "CALL_AI", refinement: text });
     });
   }
+
+  // 5. Close Panel
+  document.getElementById('closePanelBtn').addEventListener('click', () => {
+    window.close();
+  });
+
+  // 6. Clear Chat
+  document.getElementById('clearChatBtn').addEventListener('click', () => {
+    chatHistory = [];
+    chrome.storage.local.remove('chatHistory');
+    document.getElementById('chat-container').innerHTML = '<div class="chat-msg ai-msg">👋 Hi! I\'m your AI assistant. Click "Analyze & Fill" below to scan the page, or ask me anything!</div>';
+  });
 });
 
 function setLoadingState(isLoading) {
@@ -85,7 +109,7 @@ chrome.runtime.onMessage.addListener((request) => {
   }
 });
 
-function appendMessage(sender, text) {
+function appendMessage(sender, text, save = true) {
   const container = document.getElementById('chat-container');
   const div = document.createElement('div');
   
@@ -97,4 +121,10 @@ function appendMessage(sender, text) {
   
   // Smooth scroll to the newest message
   container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+
+  // Save to memory
+  if (save) {
+    chatHistory.push({ sender, text });
+    chrome.storage.local.set({ chatHistory });
+  }
 }
